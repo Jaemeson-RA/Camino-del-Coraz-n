@@ -163,7 +163,7 @@
 
         #board {
             position: relative;
-            min-height: 500px;
+            min-height: 600px;
             z-index: 2;
         }
 
@@ -178,24 +178,26 @@
 
         .boardCell {
             position: absolute;
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.95);
             border: 3px solid #ff6b9d;
-            border-radius: 12px;
-            padding: 6px;
-            font-size: 0.65em;
+            border-radius: 15px;
+            padding: 8px;
+            font-size: 0.7em;
             color: #d81159;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s;
-            width: 70px;
-            height: 70px;
+            width: 85px;
+            height: 85px;
             display: flex;
             align-items: center;
             justify-content: center;
             box-shadow: 0 3px 10px rgba(0,0,0,0.2);
-            line-height: 1.1;
+            line-height: 1.2;
             font-weight: 600;
             z-index: 2;
+            word-wrap: break-word;
+            overflow: hidden;
         }
 
         .boardCell:hover {
@@ -602,51 +604,63 @@
 
         function createBoard() {
             const board = document.getElementById('board');
-            const cellSize = 70;
-            const gap = 8;
             
-            // Créer un chemin en spirale organique
+            // Créer un chemin en spirale ORGANIQUE avec variation naturelle
+            // Positions calculées pour éviter les chevauchements
             const path = [
-                // Bas - droite
-                {x: 15, y: 410},
-                {x: 93, y: 410},
-                {x: 171, y: 410},
-                {x: 249, y: 410},
-                {x: 327, y: 410},
-                {x: 405, y: 410},
-                // Droite - haut
-                {x: 405, y: 332},
-                {x: 405, y: 254},
-                {x: 405, y: 176},
-                {x: 405, y: 98},
-                // Haut - gauche
-                {x: 327, y: 98},
-                {x: 249, y: 98},
-                {x: 171, y: 98},
-                {x: 93, y: 98},
-                {x: 15, y: 98},
-                // Gauche - bas
-                {x: 15, y: 176},
-                {x: 15, y: 254},
-                {x: 15, y: 332},
-                // Ligne milieu - droite
-                {x: 93, y: 332},
-                {x: 171, y: 332},
-                {x: 249, y: 332},
-                {x: 327, y: 332},
-                // Milieu - haut
-                {x: 327, y: 254},
-                {x: 327, y: 176},
-                // Haut milieu - gauche
-                {x: 249, y: 176},
-                {x: 171, y: 176},
-                {x: 93, y: 176},
-                // Gauche milieu - bas
-                {x: 93, y: 254},
-                // Centre
-                {x: 171, y: 254},
-                {x: 249, y: 254},
-                {x: 210, y: 210}
+                // DÉBUT - Coin bas gauche
+                {x: 20, y: 495},
+                
+                // Ligne du bas - vers la droite
+                {x: 115, y: 500},
+                {x: 208, y: 493},
+                {x: 305, y: 498},
+                {x: 400, y: 492},
+                {x: 495, y: 497},
+                
+                // Colonne droite - monte
+                {x: 492, y: 400},
+                {x: 498, y: 305},
+                {x: 493, y: 210},
+                {x: 497, y: 115},
+                
+                // Ligne du haut - vers la gauche
+                {x: 402, y: 20},
+                {x: 307, y: 25},
+                {x: 212, y: 18},
+                {x: 117, y: 23},
+                {x: 22, y: 20},
+                
+                // Colonne gauche - descend
+                {x: 25, y: 115},
+                {x: 20, y: 210},
+                {x: 25, y: 305},
+                {x: 22, y: 400},
+                
+                // 2ème couche - ligne du bas
+                {x: 117, y: 405},
+                {x: 212, y: 400},
+                {x: 307, y: 403},
+                {x: 400, y: 398},
+                
+                // 2ème couche - colonne droite
+                {x: 403, y: 305},
+                {x: 398, y: 212},
+                
+                // 2ème couche - ligne du haut
+                {x: 307, y: 115},
+                {x: 212, y: 110},
+                {x: 120, y: 113},
+                
+                // 2ème couche - colonne gauche
+                {x: 115, y: 208},
+                
+                // Centre - spirale finale
+                {x: 210, y: 210},
+                {x: 305, y: 208},
+                
+                // META au centre
+                {x: 257, y: 257}
             ];
 
             gameState.cellPositions = path;
@@ -660,16 +674,18 @@
                 
                 if (index === 0) {
                     cell.classList.add('inicio');
-                    cell.innerHTML = 'INICIO<br>⭐';
+                    cell.innerHTML = '<div style="font-size: 1.1em; font-weight: bold;">INICIO</div><div style="font-size: 1.3em;">⭐</div>';
                 } else if (index === path.length - 1) {
                     cell.classList.add('meta');
-                    cell.innerHTML = 'META<br>💕';
+                    cell.innerHTML = '<div style="font-size: 1.3em; font-weight: bold;">META</div><div style="font-size: 1.5em;">💕</div>';
                 } else if (PREGUNTAS[index - 1].type === 'reto-verdad') {
                     cell.classList.add('reto-verdad');
-                    cell.innerHTML = 'RETO<br>/<br>VERDAD';
+                    cell.innerHTML = '<div style="font-size: 0.9em; line-height: 1.1;">RETO<br>/<br>VERDAD</div>';
                 } else {
-                    const shortText = PREGUNTAS[index - 1].pregunta.substring(0, 16);
-                    cell.innerHTML = shortText + (shortText.length < PREGUNTAS[index - 1].pregunta.length ? '...' : '');
+                    // Afficher plus de texte
+                    const fullText = PREGUNTAS[index - 1].pregunta;
+                    const shortText = fullText.length > 28 ? fullText.substring(0, 26) + '...' : fullText;
+                    cell.innerHTML = `<div style="font-size: 0.85em; line-height: 1.2; padding: 2px;">${shortText}</div>`;
                 }
                 
                 board.appendChild(cell);
@@ -685,15 +701,15 @@
 
             // Dessiner le chemin
             ctx.strokeStyle = '#ff6b9d';
-            ctx.lineWidth = 4;
+            ctx.lineWidth = 5;
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
-            ctx.setLineDash([10, 5]);
+            ctx.setLineDash([12, 8]);
 
             ctx.beginPath();
             gameState.cellPositions.forEach((pos, index) => {
-                const x = pos.x + 35; // Centre de la case
-                const y = pos.y + 35;
+                const x = pos.x + 42.5; // Centre de la case (85/2)
+                const y = pos.y + 42.5;
                 if (index === 0) {
                     ctx.moveTo(x, y);
                 } else {
@@ -701,6 +717,20 @@
                 }
             });
             ctx.stroke();
+            
+            // Dessiner des petits cœurs le long du chemin
+            ctx.font = '16px Arial';
+            for (let i = 0; i < gameState.cellPositions.length - 1; i++) {
+                const pos1 = gameState.cellPositions[i];
+                const pos2 = gameState.cellPositions[i + 1];
+                const midX = (pos1.x + pos2.x) / 2 + 42.5;
+                const midY = (pos1.y + pos2.y) / 2 + 42.5;
+                
+                if (i % 3 === 0) { // Un cœur tous les 3 segments
+                    ctx.fillStyle = 'rgba(255, 107, 157, 0.4)';
+                    ctx.fillText('💕', midX - 8, midY + 5);
+                }
+            }
         }
 
         function setupEventListeners() {
@@ -842,10 +872,10 @@
                 
                 if (pos) {
                     // Offset pour éviter la superposition
-                    const offset = playerNum === "1" ? -8 : 12;
+                    const offset = playerNum === "1" ? -10 : 15;
                     
-                    pion.style.left = (pos.x + 12 + offset) + 'px';
-                    pion.style.top = (pos.y + 12) + 'px';
+                    pion.style.left = (pos.x + 20 + offset) + 'px';
+                    pion.style.top = (pos.y + 20) + 'px';
                 }
             });
         }
