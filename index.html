@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Camino del Corazón 💕</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #ffc9de 0%, #ffb3d1 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            touch-action: pan-y;
+        }
+
+        #gameContainer {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        #header {
+            text-align: center;
+            color: #d81159;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        #header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        #playerInfo {
+            display: flex;
+            justify-content: space-around;
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .player {
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .player.active {
+            transform: scale(1.1);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1.1); }
+            50% { transform: scale(1.15); }
+        }
+
+        .playerName {
+            font-weight: bold;
+            color: #d81159;
+            font-size: 1.2em;
+        }
+
+        .playerPoints {
+            font-size: 1.5em;
+            color: #ff6b9d;
+        }
+
+        #board {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+            position: relative;
+            min-height: 400px;
+        }
+
+        .boardCell {
+            position: absolute;
+            background: #ffcce0;
+            border: 2px solid #ff6b9d;
+            border-radius: 10px;
+            padding: 8px;
+            font-size: 0.7em;
+            color: #d81159;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 75px;
+            height: 75px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            line-height: 1.1;
+        }
+
+        .boardCell:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .boardCell.reto-verdad {
+            background: linear-gradient(135deg, #ffcce0 50%, #c9f0ff 50%);
+        }
+
+        .boardCell.meta {
+            background: #ff6b9d;
+            color: white;
+            font-weight: bold;
+            font-size: 0.85em;
+        }
+
+        .pion {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            cursor: grab;
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            z-index: 100;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+        }
+
+        .pion:active {
+            cursor: grabbing;
+        }
+
+        .pion.moving {
+            animation: bounce 0.5s ease-in-out;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .pion img {
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        #diceContainer {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .dice {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border: 3px solid #ff6b9d;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5em;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+        }
+
+        .dice:active {
+            transform: scale(0.95);
+        }
+
+        .dice.rolling {
+            animation: roll 0.5s ease-in-out;
+        }
+
+        @keyframes roll {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        #rollButton {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #ff6b9d, #ff1493);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.3em;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            margin-bottom: 15px;
+            transition: all 0.3s;
+        }
+
+        #rollButton:active {
+            transform: scale(0.98);
+        }
+
+        #rollButton:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Modals avec z-index corrigés */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 2000;
+            padding: 20px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modalContent {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            animation: slideIn 0.3s ease-out;
+            position: relative;
+            z-index: 2001;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        #questionText {
+            font-size: 1.3em;
+            color: #d81159;
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        #answerInput {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ff6b9d;
+            border-radius: 10px;
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            resize: vertical;
+        }
+
+        .modalButtons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .modalButton {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .modalButton.validate {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .modalButton.reject {
+            background: #f44336;
+            color: white;
+        }
+
+        .modalButton.submit {
+            background: #ff6b9d;
+            color: white;
+        }
+
+        .modalButton:active {
+            transform: scale(0.95);
+        }
+
+        #bonusContent {
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            animation: bounceIn 0.5s ease-out;
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        #bonusContent h2 {
+            font-size: 2em;
+            color: #d81159;
+            margin-bottom: 15px;
+        }
+
+        #bonusContent p {
+            font-size: 1.3em;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        #choiceContent h3 {
+            color: #d81159;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .choiceButtons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .choiceButton {
+            flex: 1;
+            padding: 20px;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .choiceButton.reto {
+            background: linear-gradient(135deg, #ff6b9d, #ff1493);
+            color: white;
+        }
+
+        .choiceButton.verdad {
+            background: linear-gradient(135deg, #4fc3f7, #0288d1);
+            color: white;
+        }
+
+        .choiceButton:active {
+            transform: scale(0.95);
+        }
+
+        #gameOverContent h2 {
+            color: #d81159;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+
+        #gameOverContent p {
+            font-size: 1.3em;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        #restartButton {
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #ff6b9d, #ff1493);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.3em;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        #validationAnswer {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            font-size: 1.1em;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="header">
+            <h1>💕 Camino del Corazón 💕</h1>
+        </div>
+
+        <div id="playerInfo">
+            <div class="player active" id="player1Info">
+                <div class="playerName">Alejandra 👩</div>
+                <div class="playerPoints">0 pts</div>
+            </div>
+            <div class="player" id="player2Info">
+                <div class="playerName">Jaemeson 👨</div>
+                <div class="playerPoints">0 pts</div>
+            </div>
+        </div>
+
+        <button id="rollButton">🎲 Tirar los dados 🎲</button>
+
+        <div id="diceContainer">
+            <div class="dice" id="dice1">?</div>
+            <div class="dice" id="dice2">?</div>
+        </div>
+
+        <div id="board">
+            <div id="pion1" class="pion">
+                <img src="assets/pion1.svg" alt="Alejandra">
+            </div>
+            <div id="pion2" class="pion">
+                <img src="assets/pion2.svg" alt="Jaemeson">
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal pour les questions -->
+    <div id="questionModal" class="modal">
+        <div class="modalContent">
+            <h3 id="questionText"></h3>
+            <textarea id="answerInput" placeholder="Escribe tu respuesta aquí..." rows="4"></textarea>
+            <div class="modalButtons">
+                <button class="modalButton submit" id="submitAnswer">Enviar respuesta</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal pour validation -->
+    <div id="validationModal" class="modal">
+        <div class="modalContent">
+            <h3 id="validationQuestion"></h3>
+            <div id="validationAnswer"></div>
+            <div class="modalButtons">
+                <button class="modalButton validate">✓ Correcto</button>
+                <button class="modalButton reject">✗ Incorrecto</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal bonus -->
+    <div id="bonusModal" class="modal">
+        <div id="bonusContent">
+            <h2>🎉 ¡DOBLE! 🎉</h2>
+            <p id="bonusText"></p>
+            <button class="modalButton submit" onclick="closeBonus()">¡Genial!</button>
+        </div>
+    </div>
+
+    <!-- Modal choix Reto/Verdad -->
+    <div id="choiceModal" class="modal">
+        <div class="modalContent" id="choiceContent">
+            <h3>Elige tu destino 🎯</h3>
+            <div class="choiceButtons">
+                <button class="choiceButton reto" onclick="chooseType('reto')">RETO 🔥</button>
+                <button class="choiceButton verdad" onclick="chooseType('verdad')">VERDAD 💬</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div id="gameOver" class="modal">
+        <div class="modalContent" id="gameOverContent">
+            <h2>💕 ¡FIN DEL JUEGO! 💕</h2>
+            <p id="winnerText"></p>
+            <button id="restartButton">Jugar de nuevo</button>
+        </div>
+    </div>
+
+    <script>
+        // Configuration du jeu
+        const PREGUNTAS = [
+            { pregunta: "Color favorito", type: "normal", points: 1 },
+            { pregunta: "Comida preferida", type: "normal", points: 1 },
+            { pregunta: "Película favorita", type: "normal", points: 1 },
+            { pregunta: "Mayor sueño que tienes", type: "normal", points: 1 },
+            { pregunta: "Donde viajar conmigo ✈️", type: "normal", points: 1 },
+            { pregunta: "Posición favorita en la cama 😏", type: "normal", points: 1 },
+            { pregunta: "Canción que te hace pensar en mí 🎵", type: "normal", points: 1 },
+            { pregunta: "Si pudieras tener un superpoder, ¿cuál sería? ⚡", type: "normal", points: 1 },
+            { pregunta: "¿Qué te enamora de mí? ❤️", type: "normal", points: 1 },
+            { pregunta: "Retrocede 2 casillas 😊", type: "normal", points: 1 },
+            { pregunta: "Una foto tuya haciendo una cara divertida 😜", type: "normal", points: 1 },
+            { pregunta: "¿Qué ropa te hace sentir sexy? 👗", type: "normal", points: 1 },
+            { pregunta: "Tu ciudad preferida 🏙️", type: "normal", points: 1 },
+            { pregunta: "Algo que te da mucha risa 😂", type: "normal", points: 1 },
+            { pregunta: "Tu bebida favorita 🍹", type: "normal", points: 1 },
+            { pregunta: "Lo que más valoras de nuestra relación 💑", type: "normal", points: 1 },
+            { pregunta: "Pregunta lo que quieras 💭", type: "normal", points: 1 },
+            { pregunta: "Algo que te gustaría que hiciéramos juntos", type: "normal", points: 1 },
+            { pregunta: "Tu recuerdo más embarazoso 🙈", type: "normal", points: 1 },
+            { pregunta: "Describe tu cita perfecta 💕", type: "normal", points: 1 },
+            { pregunta: "¿RETO o VERDAD?", type: "reto-verdad", points: 2 },
+            { pregunta: "Retrocede 2 casillas 😊", type: "normal", points: 1 },
+            { pregunta: "Algo que te gustaría que hiciera más a menudo", type: "normal", points: 1 },
+            { pregunta: "Una fantasía tuya 😏", type: "normal", points: 1 },
+            { pregunta: "Una palabra que me describa 💬", type: "normal", points: 1 },
+            { pregunta: "Cuéntame un recuerdo de infancia 🎈", type: "normal", points: 1 },
+            { pregunta: "Lugar donde te gustaría besarme 💋", type: "normal", points: 1 },
+            { pregunta: "Algo siempre quisiste probar conmigo", type: "normal", points: 1 },
+            { pregunta: "Tu peor cita 😬", type: "normal", points: 1 },
+            { pregunta: "¿Qué parte de mi cuerpo te gusta más? 👀", type: "normal", points: 1 },
+            { pregunta: "Un cumplido sincero 🌟", type: "normal", points: 1 },
+            { pregunta: "Describe nuestro primer beso 💋", type: "normal", points: 1 }
+        ];
+
+        const BONUS_OPTIONS = [
+            "Juega una segunda vez 🎲",
+            "+ 5 puntos 🌟",
+            "Avanza de 1 casilla ➡️",
+            "Verdad absoluta: pose una pregunta, no puede mentir 💬"
+        ];
+
+        // État du jeu
+        let gameState = {
+            currentPlayer: 1,
+            players: {
+                1: { name: "Alejandra", points: 0, position: 0 },
+                2: { name: "Jaemeson", points: 0, position: 0 }
+            },
+            dice1: 0,
+            dice2: 0,
+            canRoll: true,
+            currentQuestion: null,
+            currentAnswer: "",
+            boardSize: 32,
+            currentChosenType: null
+        };
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', function() {
+            createBoard();
+            updateUI();
+            setupEventListeners();
+            positionPions();
+        });
+
+        function createBoard() {
+            const board = document.getElementById('board');
+            const cellSize = 75;
+            const gap = 8;
+            
+            // Créer un chemin en spirale
+            const path = [
+                // Ligne du bas (droite)
+                ...Array.from({length: 6}, (_, i) => ({x: 15 + i * (cellSize + gap), y: 310})),
+                // Colonne droite (haut)
+                ...Array.from({length: 4}, (_, i) => ({x: 15 + 5 * (cellSize + gap), y: 310 - (i + 1) * (cellSize + gap)})),
+                // Ligne du haut (gauche)
+                ...Array.from({length: 5}, (_, i) => ({x: 15 + (4 - i) * (cellSize + gap), y: 15})),
+                // Colonne gauche (bas)
+                ...Array.from({length: 3}, (_, i) => ({x: 15, y: 15 + (i + 1) * (cellSize + gap)})),
+                // Ligne milieu (droite)
+                ...Array.from({length: 4}, (_, i) => ({x: 15 + (i + 1) * (cellSize + gap), y: 15 + 3 * (cellSize + gap)})),
+                // Colonne milieu droite (haut)
+                ...Array.from({length: 2}, (_, i) => ({x: 15 + 4 * (cellSize + gap), y: 15 + (2 - i) * (cellSize + gap)})),
+                // Ligne milieu (gauche)
+                ...Array.from({length: 3}, (_, i) => ({x: 15 + (3 - i) * (cellSize + gap), y: 15 + (cellSize + gap)})),
+                // Centre
+                {x: 15 + (cellSize + gap), y: 15 + 2 * (cellSize + gap)}
+            ];
+
+            path.forEach((pos, index) => {
+                const cell = document.createElement('div');
+                cell.className = 'boardCell';
+                cell.dataset.position = index;
+                cell.style.left = pos.x + 'px';
+                cell.style.top = pos.y + 'px';
+                
+                if (index === 0) {
+                    cell.classList.add('meta');
+                    cell.innerHTML = 'INICIO<br>⭐';
+                } else if (index === path.length - 1) {
+                    cell.classList.add('meta');
+                    cell.innerHTML = 'META<br>💕';
+                } else if (PREGUNTAS[index - 1].type === 'reto-verdad') {
+                    cell.classList.add('reto-verdad');
+                    cell.innerHTML = 'RETO<br>/<br>VERDAD';
+                } else {
+                    const shortText = PREGUNTAS[index - 1].pregunta.substring(0, 18);
+                    cell.innerHTML = shortText + (shortText.length < PREGUNTAS[index - 1].pregunta.length ? '...' : '');
+                }
+                
+                board.appendChild(cell);
+            });
+        }
+
+        function setupEventListeners() {
+            document.getElementById('rollButton').addEventListener('click', rollDice);
+            document.getElementById('submitAnswer').addEventListener('click', submitAnswer);
+            document.getElementById('restartButton').addEventListener('click', restartGame);
+            
+            const validateBtn = document.querySelector('.modalButton.validate');
+            const rejectBtn = document.querySelector('.modalButton.reject');
+            
+            if (validateBtn) validateBtn.addEventListener('click', () => validateAnswer(true));
+            if (rejectBtn) rejectBtn.addEventListener('click', () => validateAnswer(false));
+
+            // Drag and drop pour les pions
+            setupPionDrag('pion1');
+            setupPionDrag('pion2');
+        }
+
+        function setupPionDrag(pionId) {
+            const pion = document.getElementById(pionId);
+            let isDragging = false;
+            let startX, startY, initialLeft, initialTop;
+
+            pion.addEventListener('touchstart', (e) => {
+                isDragging = true;
+                const touch = e.touches[0];
+                startX = touch.clientX;
+                startY = touch.clientY;
+                initialLeft = pion.offsetLeft;
+                initialTop = pion.offsetTop;
+                pion.style.transition = 'none';
+                e.preventDefault();
+            });
+
+            pion.addEventListener('touchmove', (e) => {
+                if (!isDragging) return;
+                const touch = e.touches[0];
+                const deltaX = touch.clientX - startX;
+                const deltaY = touch.clientY - startY;
+                pion.style.left = (initialLeft + deltaX) + 'px';
+                pion.style.top = (initialTop + deltaY) + 'px';
+                e.preventDefault();
+            });
+
+            pion.addEventListener('touchend', (e) => {
+                isDragging = false;
+                pion.style.transition = 'all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
+                e.preventDefault();
+            });
+        }
+
+        function rollDice() {
+            if (!gameState.canRoll) return;
+            
+            gameState.canRoll = false;
+            const dice1 = document.getElementById('dice1');
+            const dice2 = document.getElementById('dice2');
+            
+            dice1.classList.add('rolling');
+            dice2.classList.add('rolling');
+            
+            let rolls = 0;
+            const interval = setInterval(() => {
+                dice1.textContent = Math.floor(Math.random() * 6) + 1;
+                dice2.textContent = Math.floor(Math.random() * 6) + 1;
+                rolls++;
+                
+                if (rolls >= 10) {
+                    clearInterval(interval);
+                    gameState.dice1 = Math.floor(Math.random() * 6) + 1;
+                    gameState.dice2 = Math.floor(Math.random() * 6) + 1;
+                    dice1.textContent = gameState.dice1;
+                    dice2.textContent = gameState.dice2;
+                    dice1.classList.remove('rolling');
+                    dice2.classList.remove('rolling');
+                    
+                    // Vérifier si c'est un double
+                    if (gameState.dice1 === gameState.dice2) {
+                        showBonus();
+                    } else {
+                        movePion();
+                    }
+                }
+            }, 100);
+        }
+
+        function showBonus() {
+            const bonus = BONUS_OPTIONS[Math.floor(Math.random() * BONUS_OPTIONS.length)];
+            document.getElementById('bonusText').textContent = bonus;
+            document.getElementById('bonusModal').classList.add('show');
+            
+            // Appliquer le bonus
+            if (bonus.includes("5 puntos")) {
+                gameState.players[gameState.currentPlayer].points += 5;
+            } else if (bonus.includes("Avanza")) {
+                gameState.players[gameState.currentPlayer].position += 1;
+            }
+            
+            setTimeout(() => {
+                closeBonus();
+                movePion();
+            }, 3000);
+        }
+
+        function closeBonus() {
+            document.getElementById('bonusModal').classList.remove('show');
+        }
+
+        function movePion() {
+            const totalMove = gameState.dice1 + gameState.dice2;
+            const currentPos = gameState.players[gameState.currentPlayer].position;
+            const newPos = Math.min(currentPos + totalMove, gameState.boardSize - 1);
+            
+            gameState.players[gameState.currentPlayer].position = newPos;
+            
+            // Animer le pion
+            const pionId = 'pion' + gameState.currentPlayer;
+            const pion = document.getElementById(pionId);
+            pion.classList.add('moving');
+            
+            setTimeout(() => {
+                positionPions();
+                pion.classList.remove('moving');
+                
+                // Vérifier si le joueur a atteint la fin
+                if (newPos === gameState.boardSize - 1) {
+                    endGame();
+                } else {
+                    showQuestion(newPos);
+                }
+            }, 500);
+        }
+
+        function positionPions() {
+            const cells = document.querySelectorAll('.boardCell');
+            
+            Object.keys(gameState.players).forEach(playerNum => {
+                const player = gameState.players[playerNum];
+                const pion = document.getElementById('pion' + playerNum);
+                const cell = cells[player.position];
+                
+                if (cell) {
+                    // Offset pour éviter la superposition
+                    const offset = playerNum === "1" ? -5 : 10;
+                    
+                    pion.style.left = (cell.offsetLeft + 12 + offset) + 'px';
+                    pion.style.top = (cell.offsetTop + 12) + 'px';
+                }
+            });
+        }
+
+        function showQuestion(position) {
+            if (position === 0) {
+                nextTurn();
+                return;
+            }
+            
+            const pregunta = PREGUNTAS[position - 1];
+            
+            if (pregunta.type === 'reto-verdad') {
+                document.getElementById('choiceModal').classList.add('show');
+                return;
+            }
+            
+            gameState.currentQuestion = pregunta;
+            document.getElementById('questionText').textContent = pregunta.pregunta;
+            document.getElementById('answerInput').value = '';
+            document.getElementById('questionModal').classList.add('show');
+        }
+
+        function chooseType(type) {
+            document.getElementById('choiceModal').classList.remove('show');
+            gameState.currentChosenType = type;
+            
+            // Créer une question basée sur le type
+            const question = type === 'reto' ? 
+                "RETO: Haz algo atrevido y descríbelo 🔥" : 
+                "VERDAD: Responde con sinceridad absoluta 💬";
+            
+            gameState.currentQuestion = { pregunta: question, type: "reto-verdad", points: 2 };
+            document.getElementById('questionText').textContent = question;
+            document.getElementById('answerInput').value = '';
+            document.getElementById('questionModal').classList.add('show');
+        }
+
+        function submitAnswer() {
+            gameState.currentAnswer = document.getElementById('answerInput').value;
+            
+            if (!gameState.currentAnswer.trim()) {
+                alert('Por favor escribe una respuesta');
+                return;
+            }
+            
+            document.getElementById('questionModal').classList.remove('show');
+            
+            // Montrer la modal de validation à l'autre joueur
+            document.getElementById('validationQuestion').textContent = gameState.currentQuestion.pregunta;
+            document.getElementById('validationAnswer').textContent = gameState.currentAnswer;
+            document.getElementById('validationModal').classList.add('show');
+        }
+
+        function validateAnswer(isCorrect) {
+            document.getElementById('validationModal').classList.remove('show');
+            
+            if (isCorrect) {
+                gameState.players[gameState.currentPlayer].points += gameState.currentQuestion.points;
+            }
+            
+            updateUI();
+            nextTurn();
+        }
+
+        function nextTurn() {
+            gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
+            gameState.canRoll = true;
+            updateUI();
+        }
+
+        function updateUI() {
+            // Mettre à jour les points
+            document.querySelector('#player1Info .playerPoints').textContent = 
+                gameState.players[1].points + ' pts';
+            document.querySelector('#player2Info .playerPoints').textContent = 
+                gameState.players[2].points + ' pts';
+            
+            // Mettre à jour le joueur actif
+            document.getElementById('player1Info').classList.toggle('active', gameState.currentPlayer === 1);
+            document.getElementById('player2Info').classList.toggle('active', gameState.currentPlayer === 2);
+            
+            // Mettre à jour le bouton
+            document.getElementById('rollButton').disabled = !gameState.canRoll;
+        }
+
+        function endGame() {
+            const winner = gameState.players[1].points > gameState.players[2].points ? 
+                gameState.players[1] : gameState.players[2];
+            
+            document.getElementById('winnerText').innerHTML = 
+                `<strong>${winner.name}</strong> ha ganado con <strong>${winner.points}</strong> puntos! 🎉<br><br>` +
+                `Alejandra: ${gameState.players[1].points} pts<br>` +
+                `Jaemeson: ${gameState.players[2].points} pts`;
+            
+            document.getElementById('gameOver').classList.add('show');
+        }
+
+        function restartGame() {
+            gameState = {
+                currentPlayer: 1,
+                players: {
+                    1: { name: "Alejandra", points: 0, position: 0 },
+                    2: { name: "Jaemeson", points: 0, position: 0 }
+                },
+                dice1: 0,
+                dice2: 0,
+                canRoll: true,
+                currentQuestion: null,
+                currentAnswer: "",
+                boardSize: 32,
+                currentChosenType: null
+            };
+            
+            document.getElementById('dice1').textContent = '?';
+            document.getElementById('dice2').textContent = '?';
+            document.getElementById('gameOver').classList.remove('show');
+            positionPions();
+            updateUI();
+        }
+    </script>
+</body>
+</html>
